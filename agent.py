@@ -122,15 +122,20 @@ class MarkdownToPlotAgent(PrometheusAgent):
 
         async with self.llm_client(context, config=cfg) as llm:
             r = await llm.medium(
-                f"Return ONLY the name of the column in '{df.columns}'? {column_description}")
-        column_name = r.text
+                f"Return ONLY the name of the column to plot on x axis in '{df.columns}'? {column_description}")
+        x_column_name = r.text
+
+        async with self.llm_client(context, config=cfg) as llm:
+            r = await llm.medium(
+                f"Return ONLY the name of the column to plot on y axis in '{df.columns}'? {column_description}")
+        y_column_name = r.text
 
         # async with self.llm_client(context, config=cfg) as llm:
         #     r = await llm.medium(
         #         f"Return this table as a CSV file. It should be formatted as the raw text in a CSV file would be. Do not add any other text to your response. {table_text} ")
         # table_text = r.text
 
-        plt.plot(df[column_name])
+        plt.plot(df[x_column_name],df[y_column_name])
 
         # Save a local CSV file
         plt.savefig("plot.png")
@@ -218,6 +223,7 @@ class MarkdownToPlotAgent(PrometheusAgent):
                 r = await llm.medium(
                     f"Return ONLY the table whose caption matches '{table_description}'? {text}")
             table_text = r.text
+            
     
             async with self.llm_client(context, config=cfg) as llm:
                 r = await llm.medium(
