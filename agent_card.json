@@ -8,7 +8,7 @@
   },
   "skills": [
     {
-      "id": "markdown_to_plot_analysis",
+      "id": "markdown_to_CSV",
       "name": "Markdown to Plot Analysis",
       "description": "Performs analysis using markdown to plot",
       "usage_notes": "When to use this skill vs. other available skills.",

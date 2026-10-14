@@ -23,10 +23,12 @@ serving, and registry registration for you.
 import os
 import logging
 from typing import Any
+from pathlib import Path
 
 from prometheus_api import load_prompt  # noqa: F401 - used by the LLM pattern below
 from prometheus_api.agent import EventQueue, PrometheusAgent, RequestContext
 from prometheus_api.llm_client import LLMConfig
+from prometheus_api.storage_client.connection import ConnectionConfig
 
 # Read secrets and configuration from environment variables.
 # Never hard-code API keys or URLs here.
@@ -71,7 +73,9 @@ class MarkdownToPlotAgent(PrometheusAgent):
         document_ID = params.get("document_artifact_id")
         table_description = params.get("table_description")
         if not document_ID:
-            return {"status": "error", "error": "markdown file is not accessible"}
+            return {"status": "error", "error": "Markdown file is not accessible"}
+        if not table_description:
+            return {"status": "error", "error": "Description of table to be searched for is missing."}
         cfg = LLMConfig.from_env()   # profile from .env
         if cfg.proxy_url:            # only the platform proxy
             cfg = cfg.with_api_key(os.getenv("LITELLM_MASTER_KEY"))
@@ -95,15 +99,37 @@ class MarkdownToPlotAgent(PrometheusAgent):
             context=context, artifacts=params.get("artifacts"))
         text = path.read_text()
 
+        await self.send_status_update(
+            context=context,
+            event_queue=event_queue,
+            message="Locating table…",
+        )
+
         async with self.llm_client(context, config=cfg) as llm:
             r = await llm.medium(
-                f"Which table caption matches '{table_description}'? {text}")
-        answer = r.text
+                f"Return ONLY the table whose caption matches '{table_description}'? {text}")
+        table_text = r.text
+
+        async with self.llm_client(context, config=cfg) as llm:
+            r = await llm.medium(
+                f"Return this table as a CSV file. It should be formatted as the raw text in a CSV file would be. Do not add any other text to your response. {table_text} ")
+        table_text = r.text
+
+        # Save a local CSV file
+        with open("table.csv", "w") as file:
+            file.write(table_text)
+
+        path = Path("table.csv").resolve()
+        ref = await self.send_deeplynx_artifact(
+            context=context, event_queue=event_queue,
+            file_path=path, name="table.csv",
+            description="Requested table",
+            storage_config=ConnectionConfig.from_env())
 
         result = {
             "status": "success",
             "input_received": True,
-            "message": f"The user is looking for the table :{answer}.",
+            "message": f"The user is looking for the table :{table_text}.",
         }
 
         # ------------------------------------------------------------------
