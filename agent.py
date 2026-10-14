@@ -20,11 +20,13 @@ This is a Prometheus specialist agent.  Subclass PrometheusAgent and implement
 serving, and registry registration for you.
 """
 
+import os
 import logging
 from typing import Any
 
 from prometheus_api import load_prompt  # noqa: F401 - used by the LLM pattern below
 from prometheus_api.agent import EventQueue, PrometheusAgent, RequestContext
+from prometheus_api.llm_client import LLMConfig
 
 # Read secrets and configuration from environment variables.
 # Never hard-code API keys or URLs here.
@@ -65,11 +67,14 @@ class MarkdownToPlotAgent(PrometheusAgent):
         # 1. Read inputs from params.  These keys must match the properties
         #    declared in agent_card.json's inputSchema.
         # ------------------------------------------------------------------
-        
+
         document_ID = params.get("document_artifact_id")
-        tab_description = params.get("table_description")
+        table_description = params.get("table_description")
         if not document_ID:
             return {"status": "error", "error": "markdown file is not accessible"}
+        cfg = LLMConfig.from_env()   # profile from .env
+        if cfg.proxy_url:            # only the platform proxy
+            cfg = cfg.with_api_key(os.getenv("LITELLM_MASTER_KEY"))
 
         # ------------------------------------------------------------------
         # 2. Send optional progress updates so the UI stays responsive.
@@ -88,11 +93,17 @@ class MarkdownToPlotAgent(PrometheusAgent):
         path = await self.get_artifact_file_path(
             document_ID,
             context=context, artifacts=params.get("artifacts"))
-        text = path.read_text()    
+        text = path.read_text()
+
+        async with self.llm_client(context, config=cfg) as llm:
+            r = await llm.medium(
+                f"Which table caption matches '{table_description}'? {text}")
+        answer = r.text
+
         result = {
             "status": "success",
-            "input_received": text,
-            "message": f"The markdown says {text}.",
+            "input_received": True,
+            "message": f"The user is looking for the table :{answer}.",
         }
 
         # ------------------------------------------------------------------

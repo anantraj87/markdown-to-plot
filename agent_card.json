@@ -22,7 +22,7 @@
         "x_artifact_ref": "single",
         "description": "The markdown document." },
       "table_description": { "type": "string",
-        "description": "How the user named the table." } },
+        "description": "How the user describes the table that should be plotted." } },
         "required": ["document_artifact_id", "table_description"]
       }
     }
