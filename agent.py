@@ -41,33 +41,6 @@ logger = logging.getLogger(__name__)
 class MarkdownToPlotAgent(PrometheusAgent):
     """Markdown to Plot Agent."""
 
-    # Optional: register agent-owned HTTP endpoints in __init__.
-    #
-    # def __init__(self, *args: Any, **kwargs: Any) -> None:
-    #     super().__init__(*args, **kwargs)
-    #     self.add_http_endpoint(
-    #         "/api/preview/{artifact_id}",
-    #         self.preview_artifact,
-    #         methods=["GET"],
-    #         endpoint_id="artifact_preview",
-    #         purpose="artifact",
-    #         description="Return preview metadata for one artifact.",
-    #         content_types=["application/json"],
-    #     )
-    #     self.add_static_endpoint(
-    #         "/viewer",
-    #         "viewer-assets",
-    #         endpoint_id="viewer_assets",
-    #         purpose="viewer_plugin",
-    #         description="Serve viewer plugin JavaScript and CSS.",
-    #         content_types=["text/javascript", "text/css"],
-    #     )
-    #
-    # async def preview_artifact(self, request):
-    #     from starlette.responses import JSONResponse
-    #
-    #     return JSONResponse({"artifact_id": request.path_params["artifact_id"]})
-
     async def _execute(
         self,
         params: dict[str, Any],
@@ -92,9 +65,11 @@ class MarkdownToPlotAgent(PrometheusAgent):
         # 1. Read inputs from params.  These keys must match the properties
         #    declared in agent_card.json's inputSchema.
         # ------------------------------------------------------------------
-        input_data = params.get("input_data")
-        if not input_data:
-            return {"status": "error", "error": "input_data is required"}
+        
+        document_ID = params.get("document_artifact_id")
+        tab_description = params.get("table_description")
+        if not document_ID:
+            return {"status": "error", "error": "markdown file is not accessible"}
 
         # ------------------------------------------------------------------
         # 2. Send optional progress updates so the UI stays responsive.
@@ -110,10 +85,14 @@ class MarkdownToPlotAgent(PrometheusAgent):
         # ------------------------------------------------------------------
         # 3. Do your actual work here.  Replace this with real logic.
         # ------------------------------------------------------------------
+        path = await self.get_artifact_file_path(
+            document_ID,
+            context=context, artifacts=params.get("artifacts"))
+        text = path.read_text()    
         result = {
             "status": "success",
-            "input_received": input_data,
-            "message": "Replace this with your agent's processing logic.",
+            "input_received": text,
+            "message": f"The markdown says {text}.",
         }
 
         # ------------------------------------------------------------------

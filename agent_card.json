@@ -3,7 +3,7 @@
   "description": "Identifies table from markdown based on user prompt and plots the requested data",
   "version": "1.0.0",
   "capabilities": {
-    "streaming": false,
+    "streaming": true,
     "pushNotifications": false
   },
   "skills": [
@@ -18,12 +18,12 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "input_data": {
-            "type": "string",
-            "description": "The main input data to process."
-          }
-        },
-        "required": ["input_data"]
+      "document_artifact_id": { "type": "string",
+        "x_artifact_ref": "single",
+        "description": "The markdown document." },
+      "table_description": { "type": "string",
+        "description": "How the user named the table." } },
+        "required": ["document_artifact_id", "table_description"]
       }
     }
   ]
