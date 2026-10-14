@@ -25,6 +25,26 @@
         "description": "How the user describes the table that should be plotted." } },
         "required": ["document_artifact_id", "table_description"]
       }
+    },
+
+    {
+      "id": "CSV_to_Plot",
+      "name": "CSV to Plot Analysis",
+      "description": "Plots data from a CSV file",
+      "usage_notes": "to plot specific columns in a csv.",
+      "requires_approval": false,
+      "expected_duration_seconds": 30,
+      "output_format": "JSON with keys: status, input_received, message",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+      "document_artifact_id": { "type": "string",
+        "x_artifact_ref": "single",
+        "description": "The markdown document." },
+      "table_description": { "type": "string",
+        "description": "How the user describes the table that should be plotted." } },
+        "required": ["document_artifact_id", "column_description"]
+      }
     }
   ]
 }
