@@ -1,0 +1,30 @@
+{
+  "name": "Markdown to Plot Agent",
+  "description": "Identifies table from markdown based on user prompt and plots the requested data",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false
+  },
+  "skills": [
+    {
+      "id": "markdown_to_plot_analysis",
+      "name": "Markdown to Plot Analysis",
+      "description": "Performs analysis using markdown to plot",
+      "usage_notes": "When to use this skill vs. other available skills.",
+      "requires_approval": false,
+      "expected_duration_seconds": 30,
+      "output_format": "JSON with keys: status, input_received, message",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "input_data": {
+            "type": "string",
+            "description": "The main input data to process."
+          }
+        },
+        "required": ["input_data"]
+      }
+    }
+  ]
+}
